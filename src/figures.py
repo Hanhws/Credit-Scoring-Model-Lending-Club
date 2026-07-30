@@ -128,7 +128,7 @@ def fig_leak(corr_honest, corr_leak, sharpe_honest, sharpe_leak):
         _clean(ax)
     fig.suptitle("그림 2. 데이터를 무작위로 섞으면 성적이 부풀려진다",
                  x=0.02, ha="left", fontsize=13, weight="bold", y=1.08)
-    fig.text(0.02, 0.98, "같은 최종 규칙(전략 ②)에 데이터 분할만 바꿔 적용 — 6장 사다리의 ②와 ⑥에 해당",
+    fig.text(0.02, 0.98, "같은 최종 규칙(전략 ②)에 데이터 분할만 바꿔 적용 — 최종 사다리의 ②와 ⑥에 해당",
              ha="left", color=INK2, fontsize=9.5)
     fig.tight_layout()
     return _save(fig, "fig2_시대누출.png")
@@ -175,7 +175,7 @@ def fig_grade(grade_tbl):
     fig.suptitle("그림 3. 어느 등급까지 빌려줄 것인가", x=0.02, ha="left",
                  fontsize=13, weight="bold", y=1.04)
     fig.text(0.02, -0.04,
-             "개발 단계 숫자 — train 파일의 선택 블록에서 잰 값. 6장의 최종 평가(다른 대출)와 다른 데이터라 Sharpe가 조금 다르다.",
+             "개발 단계 숫자 — train 파일의 선택 블록에서 잰 값. 최종 평가(다른 대출)와 다른 데이터라 Sharpe가 조금 다르다.",
              ha="left", color=MUTED, fontsize=9)
     fig.tight_layout()
     return _save(fig, "fig3_등급컷.png")
