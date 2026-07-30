@@ -1,84 +1,162 @@
-"""Cohort-based Sortino / Sharpe ratio for a loan portfolio.
+"""Vintage-level risk-adjusted return: the headline measurement.
 
-Unit of analysis: origination cohort (issue month). Dollars are aggregated
-first within each cohort (sum funded_amnt, sum total_pymnt) and *then*
-converted to an annualized rate -- weight-averaging already-annualized
-per-loan rates would let a single early default dominate a cohort out of
-proportion to the dollars actually at risk. Sharpe/Sortino are then computed
-across the resulting time series of cohort excess returns, which captures how
-much the portfolio's risk-adjusted return swings across economic cycles --
-the thing that determines whether LC can run this book sustainably.
+Choosing the unit of observation
+--------------------------------
+A Sharpe ratio needs a return series, and for a loan book there are three
+candidates. Only one of them measures something a lender would recognise as
+risk.
+
+  per loan      mean(ER)/sd(ER) across individual loans. This is dominated by
+                idiosyncratic borrower risk, which a book of 580,000 loans
+                diversifies away almost entirely. It is an information ratio on
+                the ranking model, not a portfolio Sharpe, and it lands near 0.1
+                no matter how good the strategy is.
+
+  per month     the book's monthly NAV return (portfolio.py). This is the
+                textbook answer for a traded asset and the wrong answer here:
+                held at amortised cost, an amortising loan book has almost no
+                monthly innovation -- the coupon arrives on schedule and losses
+                are recognised on an accounting trigger. It produces annualised
+                Sharpes near 8, which is an artefact of the accounting, not a
+                statement about risk. Kept as a cross-check, desmoothed, never
+                as the headline.
+
+  per VINTAGE   what this file computes. One observation per origination month:
+                if I run this credit box, how much does my realised return
+                depend on WHEN I lent? That is the risk a lender actually
+                carries, it is the risk that ruins lenders, and in this dataset
+                it is large -- mean realised return per dollar falls from 13.2%
+                on 2013 vintages to -1.3% on 2018 vintages.
+
+Two things this fixes versus the previous cohort measure
+--------------------------------------------------------
+1. IRR instead of (1+R)^(1/holding_years)-1. The old annualisation raises a
+   cumulative return to a power that blows up as the holding period shrinks, so
+   a vintage that resolved quickly got an enormous annualised number in either
+   direction and dominated the standard deviation for a reason that has nothing
+   to do with credit. The IRR of the vintage's actual monthly cash-flow stream
+   is the same quantity done properly, and it is what private-credit books
+   report.
+
+2. The cash leg. Capital is measured per dollar OFFERED to the credit box, not
+   per dollar lent, so rejecting an application is an allocation to Treasuries
+   rather than a disappearance of capital:
+
+       vintage return  = a * y  +  (1 - a) * rf          a = dollar accept rate
+       vintage excess  = a * (y - rf)                    y = vintage loan IRR
+
+   Note what this does and does not buy. Because excess return scales linearly
+   in `a`, a CONSTANT acceptance rate cancels out of the Sharpe entirely --
+   mixing in cash moves mean and standard deviation by the same factor, which is
+   just the statement that Sharpe is the slope of the capital allocation line
+   and is invariant to leverage. Blending cash is therefore not a way to
+   manufacture a better Sharpe, and any analysis claiming otherwise is measuring
+   something else.
+
+   What it does buy is that a TIME-VARYING acceptance rate becomes measurable:
+   a rule that lends less into a deteriorating vintage and parks the difference
+   in Treasuries genuinely lowers the volatility of the excess-return series.
+   That is the only channel through which selectivity-as-timing can pay, and
+   this measurement is what exposes it.
 """
 import numpy as np
 import pandas as pd
 
-
-def cohort_returns(df, cohort_col="issue_month", weight_col="funded_amnt"):
-    def agg(g):
-        invested = g[weight_col].sum()
-        received = g["total_pymnt"].sum()
-        simple_return = (received - invested) / invested
-        holding_years = np.average(g["holding_years"], weights=g[weight_col])
-        ann_return = (1 + simple_return) ** (1 / holding_years) - 1
-        rf_annual = np.average(g["Rf"], weights=g[weight_col])
-        return pd.Series({
-            "invested": invested,
-            "ann_return": ann_return,
-            "rf_annual": rf_annual,
-            "ER": ann_return - rf_annual,
-        })
-
-    return df.groupby(cohort_col).apply(agg, include_groups=False)
+from . import cashflow
+from .config import SERVICING_FEE
 
 
-def sharpe_ratio(cohort_er):
-    cohort_er = cohort_er.dropna()
-    return cohort_er.mean() / cohort_er.std(ddof=1)
+def _irr(cashflows, lo=-0.99, hi=1.0, tol=1e-10, iters=200):
+    """Monthly IRR by bisection on the NPV, which is monotone in the discount
+    rate for a conventional (one outflow, then inflows) stream. Bisection rather
+    than Newton because a vintage that lost most of its principal has its root
+    pressed against the -100% boundary where Newton wanders off."""
+    cf = np.asarray(cashflows, dtype=float)
+    k = np.arange(len(cf))
 
+    def npv(r):
+        return float(np.sum(cf / (1.0 + r) ** k))
 
-def sortino_ratio(cohort_er, mar=0.0):
-    """mar is expressed in excess-return space (0 == the risk-free rate itself)."""
-    cohort_er = cohort_er.dropna()
-    downside = np.minimum(cohort_er - mar, 0.0)
-    downside_dev = np.sqrt((downside ** 2).mean())
-    if downside_dev == 0:
+    f_lo, f_hi = npv(lo), npv(hi)
+    if not np.isfinite(f_lo) or not np.isfinite(f_hi) or f_lo * f_hi > 0:
         return np.nan
-    return (cohort_er.mean() - mar) / downside_dev
+    for _ in range(iters):
+        mid = 0.5 * (lo + hi)
+        f_mid = npv(mid)
+        if abs(f_mid) < tol:
+            break
+        if f_lo * f_mid <= 0:
+            hi, f_hi = mid, f_mid
+        else:
+            lo, f_lo = mid, f_mid
+    return 0.5 * (lo + hi)
 
 
-def threshold_selection(df, pred_col, threshold=0.0):
-    """Invest wherever the model predicts a positive excess return over the
-    risk-free benchmark -- a parameter-free decision rule (no K to search
-    for), and one that lets the acceptance rate move on its own with the
-    model's read of the cycle, rather than forcing a fixed quota every month."""
-    return df[df[pred_col] > threshold]
+def vintage_table(df, weights=None, rf_table=None, servicing_fee=SERVICING_FEE, **lag_kwargs):
+    """One row per origination month: accept rate, loan IRR, blended return,
+    excess return. `weights` is dollars funded per loan under the strategy
+    (0 = rejected); None means fund everything.
+    """
+    months = np.sort(df["issue_month"].unique())
+    month_to_idx = {m: i for i, m in enumerate(months)}
+    issue_idx = df["issue_month"].map(month_to_idx).to_numpy(dtype=int)
+    n_vint = len(months)
+
+    funded = df["funded_amnt"].to_numpy(dtype=float)
+    w = funded if weights is None else np.asarray(weights, dtype=float)
+
+    pd_flows, approved = cashflow.vintage_flows(df, issue_idx, n_vint, weights=w, **lag_kwargs)
+    pool = np.zeros(n_vint)
+    np.add.at(pool, issue_idx, funded)
+    accept = np.divide(approved, pool, out=np.zeros(n_vint), where=pool > 0)
+
+    # net cash to the investor, per dollar invested: -1 at origination, then
+    # every dollar the borrower hands over less the servicer's cut
+    gross = pd_flows["interest"] + pd_flows["principal"] + pd_flows["recovery"]
+    net = gross * (1.0 - servicing_fee)
+    net[:, 0] -= 1.0
+
+    irr_ann = np.full(n_vint, np.nan)
+    life = np.full(n_vint, np.nan)
+    for i in range(n_vint):
+        if approved[i] <= 0:
+            continue
+        r_m = _irr(net[i])
+        if np.isfinite(r_m):
+            irr_ann[i] = (1.0 + r_m) ** 12 - 1.0
+        life[i] = pd_flows["balance"][i].sum()
+
+    rf_annual = np.full(n_vint, np.nan)
+    if rf_table is not None:
+        rf_series = rf_table["DGS3"].reindex(pd.DatetimeIndex(months)).ffill().bfill()
+        rf_annual = rf_series.to_numpy(dtype=float)
+
+    out = pd.DataFrame({
+        "issue_month": pd.DatetimeIndex(months),
+        "pool": pool,
+        "approved": approved,
+        "accept_rate": accept,
+        "loan_irr": irr_ann,
+        "rf": rf_annual,
+        "exposure_months": life,
+    }).set_index("issue_month")
+
+    # an unfunded vintage sits entirely in Treasuries: zero excess, not missing
+    out["loan_excess"] = np.where(out["accept_rate"] > 0, out["loan_irr"] - out["rf"], 0.0)
+    out["excess"] = out["accept_rate"] * out["loan_excess"]
+    out["blended_return"] = out["rf"] + out["excess"]
+    return out
 
 
-def variable_k_selection(df, pred_col, k_col, group_cols):
-    """Like top_k_selection, but each row carries its own K (df[k_col]) instead
-    of one global constant -- used for the GDP-slope-driven K, where K varies
-    by (state, year) instead of being a single grid-searched number."""
-    rank = df.groupby(group_cols)[pred_col].rank(pct=True, ascending=False)
-    return df[rank <= df[k_col]]
+def trim_thin_vintages(vt, min_pool_share=0.001):
+    """Drop origination months too small to estimate anything from.
 
-
-def top_k_selection(df, pred_col, k_frac, cohort_col="issue_month"):
-    """Within each origination cohort, keep the top k_frac of loans ranked by
-    predicted excess return. Selecting per-cohort (rather than globally) keeps
-    the portfolio invested every month instead of the model just avoiding bad
-    macro periods in hindsight."""
-    rank = df.groupby(cohort_col)[pred_col].rank(pct=True, ascending=False)
-    return df[rank <= k_frac]
-
-
-def portfolio_summary(df, cohort_col="issue_month", weight_col="funded_amnt"):
-    cohorts = cohort_returns(df, cohort_col, weight_col)
-    er = cohorts["ER"]
-    return {
-        "n_loans": len(df),
-        "n_cohorts": cohorts.shape[0],
-        "funded_amnt": df[weight_col].sum(),
-        "mean_excess_return": er.mean(),
-        "sharpe": sharpe_ratio(er),
-        "sortino": sortino_ratio(er),
-    }
+    LC originated $1.8M in all of 2007 and $2.4BN in 2015 alone. Equal-weighting
+    those as two observations of the same process lets a handful of loans from a
+    near-empty month set the standard deviation of the whole series, and every
+    strategy then gets scored mostly on noise from months where it deployed
+    almost no capital. The cut is on share of total dollars, so it scales with
+    the book rather than with a hard-coded loan count.
+    """
+    share = vt["pool"] / vt["pool"].sum()
+    return vt[share >= min_pool_share]

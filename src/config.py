@@ -98,6 +98,11 @@ CATEGORICAL_COLS = [
     "initial_list_status", "application_type", "verification_status_joint",
 ]
 
+# Lending Club's servicing cut, taken off every dollar the borrower repays. Net-of-fee
+# is the only return an investor actually receives, so it belongs in the measurement
+# rather than in a footnote.
+SERVICING_FEE = 0.01
+
 RANDOM_STATE = 42
 
 # data snapshot date (max observed last_pymnt_d / last_credit_pull_d is

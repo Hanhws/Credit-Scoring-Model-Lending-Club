@@ -43,10 +43,11 @@ def build_features(df):
 _DROP_RAW = {"term", "emp_length", "fico_range_low", "fico_range_high", "earliest_cr_line"}
 
 
-def feature_matrix(df, safe_only=False):
+def feature_matrix(df, safe_only=False, extra_cols=None):
     base = config.SAFE_FEATURE_COLS if safe_only else config.FEATURE_COLS
     cols = [c for c in base if c not in _DROP_RAW]
     cols += ["term_months", "emp_length_num", "credit_history_months", "fico_avg"]
+    cols += list(extra_cols or [])
     cols = [c for c in dict.fromkeys(cols) if c in df.columns]
     X = df[cols].copy()
     X["term_months"] = X["term_months"].astype("category")
