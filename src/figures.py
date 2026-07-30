@@ -295,7 +295,7 @@ def fig_dial(dial):
                      ha="center", color=INK, fontsize=10, weight="bold",
                      arrowprops=dict(arrowstyle="-", color=MUTED, lw=1))
 
-    fig.suptitle("그림 6. 타이밍 규칙은 기각됐다 — 신호가 거꾸로 갔다",
+    fig.suptitle("그림 6. 규칙이 조인 시점과 실제로 나빴던 시점이 어긋난다",
                  x=0.02, ha="left", fontsize=13, weight="bold", y=1.0)
     return _save(fig, "fig6_타이밍기각.png")
 
