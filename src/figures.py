@@ -221,15 +221,28 @@ def fig_pool(pool_dev, pool_test):
     pool = pool[~pool.index.duplicated(keep="last")]
     boundary = pd.DatetimeIndex(pool_test.index).min()
 
+    # every series the rule actually reads, ordered by how much of its movement a
+    # straight line explains. Left to right the trend dies out, which is the point:
+    # only the first two are monotone, and a linear fit on the rest is meaningless.
     cols = [("dti", "부채 대비 소득 비율 (DTI)", "높을수록 빚 부담이 큼"),
-            ("int_rate", "적용 금리 (%)", "위험에 대한 보상"),
-            ("fico_avg", "평균 신용점수 (FICO)", "높을수록 신용이 좋음")]
+            ("inq_last_6mths", "최근 6개월 신용조회 수", "높을수록 대출 탐색이 많음"),
+            ("fico_avg", "평균 신용점수 (FICO)", "높을수록 신용이 좋음"),
+            ("revol_util", "리볼빙 이용률 (%)", "높을수록 한도를 많이 씀"),
+            ("int_rate", "적용 금리 (%)", "위험에 대한 보상")]
     cols = [c for c in cols if c[0] in pool.columns]
-    fig, axes = plt.subplots(1, len(cols), figsize=(3.6 * len(cols), 3.3))
+    ncol = 3
+    nrow = int(np.ceil(len(cols) / ncol))
+    fig, axes = plt.subplots(nrow, ncol, figsize=(3.6 * ncol, 3.15 * nrow))
+    flat = np.atleast_1d(axes).ravel()
     x = pd.DatetimeIndex(pool.index)
-    for ax, (col, title, note) in zip(np.atleast_1d(axes), cols):
+    t = np.arange(len(pool))
+    for ax, (col, title, note) in zip(flat, cols):
         y = pool[col].to_numpy(dtype=float)
+        r2 = float(np.corrcoef(t, y)[0, 1] ** 2)
+        shape = "단조 추세" if r2 >= 0.5 else ("봉우리형" if r2 >= 0.15 else "추세 없는 진동")
         ax.plot(x, y, color=BLUE, lw=1.8, zorder=3)
+        b, a = np.polyfit(t, y, 1)
+        ax.plot(x, a + b * t, color=MUTED, lw=1.1, ls=(0, (5, 3)), zorder=2)
         ax.axvline(boundary, color=BASELINE, lw=1.2, ls=(0, (4, 3)), zorder=2)
         ax.annotate(f"{y[0]:.1f}", (x[0], y[0]), textcoords="offset points",
                     xytext=(0, -16), color=INK, fontsize=10, weight="bold", ha="left")
@@ -237,16 +250,21 @@ def fig_pool(pool_dev, pool_test):
                     xytext=(0, 9), color=INK, fontsize=10, weight="bold", ha="right")
         ax.set_title(title, loc="left", fontsize=11, pad=6)
         ax.set_xlabel(note, fontsize=9.5, color=MUTED)
+        ax.text(0.98, 0.04, f"R²={r2:.2f} · {shape}", transform=ax.transAxes,
+                ha="right", va="bottom", fontsize=9.5, color=MUTED)
         ax.xaxis.set_major_locator(mdates.YearLocator(3))
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
-        ax.margins(y=0.18)
+        ax.margins(y=0.20)
         _clean(ax)
-    np.atleast_1d(axes)[0].text(
-        boundary, np.atleast_1d(axes)[0].get_ylim()[1], " 평가 구간 →",
-        color=MUTED, fontsize=9, va="top")
-    fig.suptitle("그림 5. 신청서만 봐도 보인다 — 빚 부담은 10년간 꾸준히 올랐다",
-                 x=0.02, ha="left", fontsize=13, weight="bold", y=1.05)
-    fig.tight_layout()
+    for ax in flat[len(cols):]:
+        ax.axis("off")
+    flat[0].text(boundary, flat[0].get_ylim()[1], " 평가 구간 →",
+                 color=MUTED, fontsize=9, va="top")
+    fig.suptitle("그림 5. 규칙이 읽는 다섯 계열 — 단조 추세는 둘뿐이다",
+                 x=0.02, ha="left", fontsize=13, weight="bold", y=1.0)
+    fig.text(0.02, 0.955, "점선은 116개월 전체에 적합한 선형 추세선. 오른쪽으로 갈수록 그 직선이 계열을 설명하지 못한다.",
+             ha="left", color=MUTED, fontsize=9.5)
+    fig.tight_layout(rect=(0, 0, 1, 0.94))
     return _save(fig, "fig5_신청자풀.png")
 
 
