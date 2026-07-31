@@ -1,7 +1,7 @@
 """보고서 마크다운의 렌더링·참조 오류 검사.
 
 이 세션에서 실제로 두 번 이상 재발한 오류들을 고정해 둔 것이다. 본문을 고친 뒤
-    python -m src.check_report 최종보고서_v1.md
+    python -m src.check_report 최종보고서_v2.md
 로 돌린다. 종료 코드가 0이 아니면 문제가 남아 있다.
 
 검사 항목
@@ -78,7 +78,7 @@ def check(path: Path):
 
 
 def main(argv):
-    targets = [Path(a) for a in argv[1:]] or [Path("최종보고서_v1.md")]
+    targets = [Path(a) for a in argv[1:]] or [Path("최종보고서_v2.md")]
     total = 0
     for p in targets:
         if not p.exists():

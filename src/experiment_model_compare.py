@@ -5,7 +5,7 @@
 
 규율:
   - 전부 **개발용 파일 안에서만** 수행한다. 평가 파일은 열지 않는다.
-  - 학습은 train 블록, 조기중단은 valid 블록, 측정은 선택 블록.
+  - 학습은 train 블록, 조기중단은 valid 블록, 측정은 quiz 블록.
     (본편의 XGBoost와 완전히 동일한 조건)
   - 지표는 MSE가 아니라 본 보고서가 실제로 쓰는 것 — 예측 상관과 Sharpe.
 """
@@ -94,7 +94,7 @@ for name, fn in CANDIDATES.items():
 
 out = pd.DataFrame(rows)
 print("\n" + "=" * 96)
-print("선택 블록(개발 데이터)에서 측정 — 평가 파일은 열지 않음")
+print("quiz 블록(개발 데이터)에서 측정 — 평가 파일은 열지 않음")
 print("=" * 96)
 print(out.to_string(index=False, float_format=lambda x: f"{x:0.4f}"))
 print("\n범위: 예측상관 {:.4f}~{:.4f} · 등급×게이트 Sharpe {:.4f}~{:.4f} · 순위컷 Sharpe {:.4f}~{:.4f}".format(

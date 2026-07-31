@@ -175,7 +175,7 @@ def fig_grade(grade_tbl):
     fig.suptitle("그림 3. 어느 등급까지 빌려줄 것인가", x=0.02, ha="left",
                  fontsize=13, weight="bold", y=1.04)
     fig.text(0.02, -0.04,
-             "개발 단계 숫자 — train 파일의 선택 블록에서 잰 값. 최종 평가(다른 대출)와 다른 데이터라 Sharpe가 조금 다르다.",
+             "개발 단계 숫자 — train 파일의 quiz 블록에서 잰 값. 최종 평가(다른 대출)와 다른 데이터라 Sharpe가 조금 다르다.",
              ha="left", color=MUTED, fontsize=9)
     fig.tight_layout()
     return _save(fig, "fig3_등급컷.png")
