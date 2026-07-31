@@ -210,7 +210,7 @@ No performance is reported on the quiz block; it is used only for rule selection
 
 Because LC's volume is concentrated in the later years, a 6:2:2 split by loan count would leave the last block only 15 months long. That is too short to estimate the Sharpe denominator (between-vintage variation), so the split criterion was set to vintage count rather than loan count.
 
-![Figure 1. Time-based data split](../figures/fig1_데이터분할.png)
+![Figure 1. Time-based data split](../figures/en/fig1_data_split.png)
 
 The train block spans about six years but only 90 thousand loans, while the quiz block spans just over two years with 370 thousand. This is due to LC's small scale in its early years.
 
@@ -308,13 +308,13 @@ The levels of many variables shift over time — the debt-to-income ratio climbs
 
 #### Measurement
 
-![Figure 2. Performance gap by split design — same model, same features, same rule](../figures/fig2_시대누출.png)
+![Figure 2. Performance gap by split design — same model, same features, same rule](../figures/en/fig2_temporal_leakage.png)
 
 Holding the model, features, and rule fixed and changing only the split:
 
 | | Time split (this study) | Random split |
 |---|---|---|
-| Prediction correlation — quiz block | **0.024** | 0.387 (~16×) |
+| Prediction correlation — quiz block | **0.024** | 0.387 (about 16×) |
 | Final Sharpe — evaluation data | **0.84** | 1.32 |
 
 Note that the two rows are measured in different places: the prediction correlation on the development-stage quiz block, the Sharpe on the final evaluation data.
@@ -367,13 +367,13 @@ $\lambda^{\ast}$ is **the price of tightening one more notch.** Even without est
 
 #### Measurement
 
-![Figure 3. Risk–return by grade cut (quiz block)](../figures/fig3_등급컷.png)
+![Figure 3. Risk–return by grade cut (quiz block)](../figures/en/fig3_grade_cut.png)
 
 The numbers in Figure 3 are development-stage values (quiz block). The final evaluation of Section 2.3 covers the same calendar window but entirely different loans, so the numbers differ slightly — for example, A–G's Sharpe is 0.38 on the quiz block and 0.34 in the final evaluation.
 
 From A–G to A–C, risk (standard deviation) falls from 3.0% to 2.3% while mean return **actually rises**, from 1.12% to 1.33%. That is, risk falls before return does. From the next step onward, return starts falling too.
 
-![Figure 4. Indifference risk aversion λ* between adjacent steps](../figures/fig4_무차별람다.png)
+![Figure 4. Indifference risk aversion λ* between adjacent steps](../figures/en/fig4_indifference_lambda.png)
 
 The $\lambda^{\ast}$ sequence, from A–G→A–F onward, is −44, −59, −24, −6, 14, 79.
 
@@ -466,7 +466,7 @@ Step 4 becomes important later, so we stress it: **turning the dial down means n
 
 The long-run trends of the applicant-pool composition the rule uses as input are as follows.
 
-![Figure 5. The five series the rule reads — only two are monotone trends](../figures/fig5_신청자풀.png)
+![Figure 5. The five series the rule reads — only two are monotone trends](../figures/en/fig5_applicant_pool.png)
 
 Figure 5 arrays the five series together with linear trend lines (dotted), in descending order of R². Moving left to right, the straight line explains the series less and less.
 
@@ -631,7 +631,7 @@ What this sample nonetheless does say is a **bound on the effect size.** With a 
 
 #### What the rule actually did
 
-![Figure 6. Mismatch between the timing rule's approval-rate path and realized performance](../figures/fig6_타이밍기각.png)
+![Figure 6. Mismatch between the timing rule's approval-rate path and realized performance](../figures/en/fig6_timing_rejected.png)
 
 Apart from the test, what this rule did in this window can be observed directly, without statistical inference. In Figure 6, the months when the rule tightened capital do not line up with the months when performance was actually bad.
 
@@ -722,13 +722,13 @@ This means **the model's ranking genuinely carries information** — with the ca
 
 ### 2.3.3. Final Evaluation: Performance of the Six Strategies
 
-![Figure 7. Vintage excess-return series — full investment (orange) vs final rule (blue)](../figures/fig7_빈티지수익계열.png)
+![Figure 7. Vintage excess-return series — full investment (orange) vs final rule (blue)](../figures/en/fig7_vintage_return_series.png)
 
 Figure 7 is the raw material for every Sharpe calculation below: the average height of a series is the numerator, its variability the denominator.
 
 After mid-2017 both series enter negative territory. But full investment falls to −5.7% while the final rule stops at −2.0%. The final rule **did not avoid the downturn; it passed through it shallowly.**
 
-![Figure 8. The final ladder — risk, return, and Sharpe with confidence intervals by strategy](../figures/fig8_최종사다리.png)
+![Figure 8. The final ladder — risk, return, and Sharpe with confidence intervals by strategy](../figures/en/fig8_final_ladder.png)
 
 The performance of the six strategies is as follows, ordered the same as Figure 8.
 
@@ -755,7 +755,7 @@ The reading order follows the ladder of Section 2.3.1.
 
 Each of five comparisons receives a stationary-bootstrap confidence interval and p-value. Both series are resampled **with the same block indices**, preserving the vintage pairing (`sharpe_diff_bootstrap` in [src/inference.py](../src/inference.py)).
 
-![Figure 9. Bootstrap distributions of ΔSharpe between strategies](../figures/fig9_차이검정.png)
+![Figure 9. Bootstrap distributions of ΔSharpe between strategies](../figures/en/fig9_difference_tests.png)
 
 | Comparison | ΔSharpe | 95% CI | p-value | Effective n of difference |
 |---|---|---|---|---|
@@ -954,8 +954,9 @@ In that case, however, **algorithm choice becomes a new researcher degree of fre
 # Stage 1 development + Stage 2 final evaluation (CSVs saved to results/)
 python -m src.pipeline
 
-# Generate all figures in the report (PNGs saved to figures/)
-python -m src.figures
+# Generate all figures in the report
+# Korean labels -> figures/, English labels -> figures/en/
+python -m src.figures ko en
 ```
 
 | File | Role |
@@ -967,7 +968,7 @@ python -m src.figures
 | [src/timing.py](../src/timing.py) | applicant-pool composition → approval-rate dial (unadopted experiment) |
 | [src/inference.py](../src/inference.py) | stationary bootstrap, HAC tests, effective sample size, PSR and DSR |
 | [src/pipeline.py](../src/pipeline.py) | separation of development and final evaluation, control construction |
-| [src/figures.py](../src/figures.py) | the report's nine figures |
+| [src/figures.py](../src/figures.py) | the report's nine figures, in Korean and English |
 | [src/rules.py](../src/rules.py) | screening rules and random controls |
 
 
