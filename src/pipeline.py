@@ -66,7 +66,16 @@ TERM = 36
 #   19  K sweep               top-K quota grid
 #    1  timing re-specification  the dial's reference level, corrected after the
 #                               first version returned a null (see timing.py)
-TRIALS_RUN = 98
+TRIALS_PRE_FREEZE = 98
+
+# Diagnostics run AFTER the rule was frozen. They reuse the evaluation data, so
+# they are searches too and have to be charged to the same budget -- leaving them
+# out would understate the benchmark the observed Sharpe has to clear.
+#    4  algorithm comparison  LightGBM / CatBoost / Ridge / XGBoost (2.2.4절)
+#    1  random-trim control   approval-rate-matched random thinning (2.3.2절)
+TRIALS_POST_FREEZE = 5
+
+TRIALS_RUN = TRIALS_PRE_FREEZE + TRIALS_POST_FREEZE  # 103
 
 # The knee rule picks the cut just before lambda* jumps clear of the earlier steps.
 # The multiplier was chosen AFTER seeing the pattern, which is a researcher degree

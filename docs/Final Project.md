@@ -820,7 +820,7 @@ Block length is itself a researcher choice, so we disclose the sensitivity.
 
 Interval widths swing substantially with block length — the absolute level cannot be pinned down. But **the fact that the lower bound of the difference stays above zero holds at every block length.**
 
-Accounting for the distribution's non-normality, the Probabilistic Sharpe Ratio (PSR; Bailey and López de Prado, 2012) — the probability that the true Sharpe exceeds zero — is **0.717** for the final rule, short of the customary 0.95 bar.
+Accounting for the distribution's non-normality, the Probabilistic Sharpe Ratio (PSR; Bailey and López de Prado, 2012) — the probability that the true Sharpe exceeds zero — is **0.705** for the final rule, short of the customary 0.95 bar.
 
 #### (3) Multiple testing: the Deflated Sharpe
 
@@ -898,7 +898,7 @@ Because a random control matched on approval rate exists (Sharpe 0.33), the perf
 
 ### Claims not validated
 
-**(i) The absolute level, Sharpe 0.84.** The multiple-testing correction over 103 trials (Deflated Sharpe 0.549) and the PSR of 0.717 fall short of their bars.
+**(i) The absolute level, Sharpe 0.84.** The multiple-testing correction over 103 trials (Deflated Sharpe 0.549) and the PSR of 0.705 fall short of their bars.
 
 **(ii) Applicant-pool-based cycle timing.** With a contribution of +0.007 (p=0.737), indistinguishable from zero, it was not adopted. This is not a claim that timing is useless: the test lacks the power to adjudicate at all, and what is established is only the observation that "this specification did not work in this window."
 

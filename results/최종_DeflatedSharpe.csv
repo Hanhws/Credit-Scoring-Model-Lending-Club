@@ -1,6 +1,6 @@
 ﻿,0
-n_trials,98.0
+n_trials,103.0
 sr_variance_across_trials,0.06537372982263563
-expected_max_sharpe_under_null,0.6452123173263925
+expected_max_sharpe_under_null,0.6496864059121348
 observed_sharpe,0.8432237074578136
-dsr,0.5502381859231027
+dsr,0.5491088663201432
