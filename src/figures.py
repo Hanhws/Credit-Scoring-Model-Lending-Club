@@ -23,8 +23,8 @@ from matplotlib.ticker import FuncFormatter
 
 from . import config
 
-FIG_DIR = config.ROOT / "시각화"
-RESULTS_DIR = config.ROOT / "결과"
+FIG_DIR = config.ROOT / "figures"
+RESULTS_DIR = config.ROOT / "results"
 
 BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1baf7a"
 INK, INK2, MUTED = "#0b0b0b", "#52514e", "#898781"

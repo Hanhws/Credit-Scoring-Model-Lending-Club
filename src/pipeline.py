@@ -311,7 +311,7 @@ def apply_frozen(df, frozen, rf_table):
             series, pool, sers)
 
 
-RESULTS_DIR = config.ROOT / "결과"
+RESULTS_DIR = config.ROOT / "results"
 MAIN_COLS = ["전략", "집행률", "승인률변동성", "평균초과수익", "변동성", "Sharpe",
              "CI하한", "CI상한", "Sortino", "손실빈티지비율", "최악빈티지"]
 STAT_COLS = ["전략", "빈티지수", "유효표본수", "자기상관", "PSR",

@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 
 from . import config
 
-FIG_DIR = config.ROOT / "시각화"
+FIG_DIR = config.ROOT / "figures"
 
 FONT = "Apple SD Gothic Neo"
 # NOTE: this face has no U+2212 MINUS SIGN, so formulas use the ASCII hyphen

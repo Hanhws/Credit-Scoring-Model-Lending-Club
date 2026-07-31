@@ -63,5 +63,5 @@ z = (r4["Sharpe"] - rnd["Sharpe"].mean()) / rnd["Sharpe"].std()
 print(f"  (무작위 시드 분포 대비 {z:+.2f} 표준편차)")
 print("=" * 70)
 
-rnd.to_csv("결과/부록_무작위솎아내기_대조군.csv", index=False, encoding="utf-8-sig")
-print("\n저장: 결과/부록_무작위솎아내기_대조군.csv")
+rnd.to_csv("results/부록_무작위솎아내기_대조군.csv", index=False, encoding="utf-8-sig")
+print("\n저장: results/부록_무작위솎아내기_대조군.csv")

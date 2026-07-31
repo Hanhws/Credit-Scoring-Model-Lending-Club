@@ -101,5 +101,5 @@ print("\n범위: 예측상관 {:.4f}~{:.4f} · 등급×게이트 Sharpe {:.4f}~{
     out["예측상관"].min(), out["예측상관"].max(),
     out["Sharpe_등급×게이트"].min(), out["Sharpe_등급×게이트"].max(),
     out["Sharpe_순위컷"].min(), out["Sharpe_순위컷"].max()))
-out.to_csv("결과/부록_모델비교.csv", index=False, encoding="utf-8-sig")
-print("\n저장: 결과/부록_모델비교.csv")
+out.to_csv("results/부록_모델비교.csv", index=False, encoding="utf-8-sig")
+print("\n저장: results/부록_모델비교.csv")
